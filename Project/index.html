@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花知花卉智能识别系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f9f6; }
+        .hero-section {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), url('https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 380px;
+        }
+        .main-card {
+            background: #fefffb;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+        }
+        .upload-dashed {
+            border: 2px dashed #95c577;
+            background-color: #f9fbf7;
+            transition: all 0.3s;
+        }
+        .upload-dashed:hover {
+            background-color: #f1f8ed;
+            border-color: #7ab357;
+        }
+        .btn-green {
+            background-color: #87b864;
+            color: white;
+            transition: background 0.3s;
+        }
+        .btn-green:hover { background-color: #71a04f; }
+        
+        .progress-bar-container { background-color: #e0e0e0; border-radius: 10px; width: 100%; height: 12px; }
+        .progress-bar { background-color: #87b864; height: 12px; border-radius: 10px; width: 0%; transition: width 0.5s ease-out; }
+        
+        .tag-info { border: 1px solid #ddd; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; color: #555; }
+        .gallery-card { border-radius: 10px; overflow: hidden; background: white; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Hero Section & Navbar -->
+    <div class="hero-section relative">
+        <nav class="flex justify-between items-center px-12 py-6 text-white">
+            <div class="text-2xl font-bold flex items-center gap-2">
+                <span class="text-3xl">🌸</span> 花知花卉智能识别系统
+            </div>
+            <div class="flex gap-8 text-lg font-medium">
+                <a href="/" class="border-b-2 border-white pb-1">首页识别</a>
+                <a href="/gallery" class="hover:text-green-200">花卉图鉴</a>
+                <a href="/history" class="hover:text-green-200">识别记录</a>
+            </div>
+        </nav>
+        
+        <div class="text-center mt-12 text-white">
+            <h1 class="text-5xl font-bold tracking-wider text-shadow-lg mb-4">智能图像，一秒识花</h1>
+            <p class="text-xl mb-8">上传图片，快速识别花卉种类、习性、花语</p>
+        </div>
+    </div>
+
+    <!-- Main Content App -->
+    <div class="max-w-6xl mx-auto -mt-16 relative z-10 w-full mb-8 main-card rounded-3xl p-8 flex flex-col md:flex-row gap-10">
+        
+        <!-- Upload Section -->
+        <div class="w-full md:w-1/2 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 flex items-center before:content-[''] before:inline-block before:w-1 before:h-5 before:bg-green-500 before:mr-2">图片上传</h2>
+            
+            <div id="drop-zone" class="upload-dashed rounded-xl flex items-center justify-center h-64 cursor-pointer mb-6 relative">
+                <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*">
+                <div class="text-center text-gray-500">
+                    <p>点击上传/拖拽图片到此处</p>
+                </div>
+                <img id="image-preview" class="absolute inset-0 w-full h-full object-contain hidden" style="background:#000;">
+            </div>
+            
+            <div class="flex gap-4">
+                <button class="w-full btn-green py-3 rounded-full font-bold text-lg shadow-md" onclick="document.getElementById('file-input').click()">上传图片开始识别</button>
+            </div>
+        </div>
+
+        <!-- Result Section -->
+        <div class="w-full md:w-1/2 flex flex-col">
+            <h2 class="text-xl font-bold mb-4 flex items-center before:content-[''] before:inline-block before:w-1 before:h-5 before:bg-green-500 before:mr-2">识别结果</h2>
+            
+            <div class="bg-green-50/40 rounded-xl p-6 flex gap-6 min-h-[300px]">
+                <div class="w-1/3 bg-white rounded-lg p-2 shadow-sm overflow-hidden flex items-center justify-center h-48 border border-green-100">
+                    <img id="result-thumbnail" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300" alt="样例" class="w-full h-full object-cover rounded">
+                </div>
+                
+                <div class="w-2/3 flex flex-col gap-4">
+                    <div class="flex items-end gap-3 flex-wrap">
+                        <span class="text-gray-500 font-bold">花卉名称</span>
+                        <span id="res-name" class="text-2xl font-bold text-green-700 leading-none">请上传图片</span>
+                        <span id="res-status" class="hidden text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full">待确认</span>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-500 mb-1">
+                            <span>置信度</span>
+                            <span id="res-conf-text">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="res-conf-bar"></div>
+                        </div>
+                        <p id="res-message" class="text-sm text-amber-600 mt-2"></p>
+                        <p id="res-candidates" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    
+                    <div>
+                        <span class="text-gray-500 font-bold inline-block mb-2">基础信息</span>
+                        <div class="flex flex-wrap gap-2">
+                            <div class="tag-info">科属: <span id="res-family" class="text-gray-800">--</span></div>
+                            <div class="tag-info">别名: <span id="res-alias" class="text-gray-800">--</span></div>
+                            <div class="tag-info">花语: <span id="res-lang" class="text-gray-800">--</span></div>
+                            <div class="tag-info"><span id="res-loc" class="text-gray-800">暂无地理分布信息</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Mini Gallery Preview on Homepage -->
+    <div class="max-w-6xl mx-auto mb-20 px-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold flex items-center before:content-[''] before:inline-block before:w-1.5 before:h-6 before:bg-green-500 before:mr-3">热门花卉图鉴</h2>
+            <a href="/gallery" class="text-gray-400 hover:text-green-600 text-sm">全部图鉴 ></a>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="mini-gallery-container">
+            <!-- JS 提取前 5 种 -->
+        </div>
+    </div>
+
+        <script>
+        const fileInput = document.getElementById('file-input');
+        const imgPreview = document.getElementById('image-preview');
+        const thumb = document.getElementById('result-thumbnail');
+        
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imgPreview.src = event.target.result;
+                    imgPreview.classList.remove('hidden');
+                    thumb.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+                predictImage(file);
+            }
+        });
+        
+        async function predictImage(file) {
+            document.getElementById('res-name').innerText = '识别中...';
+            document.getElementById('res-name').className = 'text-2xl font-bold text-green-700 leading-none';
+            document.getElementById('res-conf-bar').style.width = '0%';
+            document.getElementById('res-message').innerText = '';
+            document.getElementById('res-candidates').innerText = '';
+            document.getElementById('res-status').className = 'hidden text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if(data.success) {
+                    document.getElementById('res-name').innerText = data.name;
+                    document.getElementById('res-name').className = 'text-2xl font-bold text-green-700 leading-none';
+                    document.getElementById('res-conf-text').innerText = data.confidence;
+                    document.getElementById('res-conf-bar').style.width = data.confidence;
+                    document.getElementById('res-family').innerText = data.info.family;
+                    document.getElementById('res-alias').innerText = data.info.alias;
+                    document.getElementById('res-lang').innerText = data.info.flower_language;
+                    document.getElementById('res-loc').innerText = data.info.location;
+
+                    if (data.uncertain) {
+                        document.getElementById('res-status').className = 'text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full';
+                        document.getElementById('res-message').innerText = data.message || '该结果可信度偏低，可参考候选结果。';
+                    } else {
+                        document.getElementById('res-message').innerText = '';
+                    }
+
+                    if (Array.isArray(data.candidates) && data.candidates.length > 1) {
+                        const alternatives = data.candidates
+                            .slice(0, 3)
+                            .map(item => `${item.name}(${item.confidence})`)
+                            .join(' / ');
+                        document.getElementById('res-candidates').innerText = `相近花种参考: ${alternatives}`;
+                    }
+
+                    const historyName = data.uncertain ? `待确认:${data.name}` : data.name;
+                    saveHistory(historyName, data.confidence, thumb.src);
+                } else {
+                    alert('识别失败: ' + data.error);
+                }
+            } catch (err) {
+                alert('网络或服务错误');
+            }
+        }
+
+        function saveHistory(name, confidence, imgSrc) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function() {
+                const size = 150;
+                canvas.width = size;
+                canvas.height = size;
+                const minSide = Math.min(img.width, img.height);
+                const sx = (img.width - minSide) / 2;
+                const sy = (img.height - minSide) / 2;
+                ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+                const miniDataUrl = canvas.toDataURL('image/jpeg', 0.6);
+
+                let history = JSON.parse(localStorage.getItem('flowerHistory') || '[]');
+                history.unshift({ name, confidence, time: new Date().toLocaleString(), img: miniDataUrl });
+                if(history.length > 20) history = history.slice(0, 20);
+                localStorage.setItem('flowerHistory', JSON.stringify(history));
+            }
+            img.src = imgSrc;
+        }
+
+        // 首页加载部分热门图鉴展示
+        async function loadMiniGallery() {
+            try {
+                const res = await fetch('/api/gallery');
+                const flowers = await res.json();
+                const container = document.getElementById('mini-gallery-container');
+                // 取最开始那几个（比如玫瑰、月季、百合等）
+                container.innerHTML = flowers.slice(0, 5).map(f => `
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition">
+                        <img src="${f.img}" class="h-32 w-full object-cover">
+                        <div class="p-3 text-center font-bold text-gray-700">${f.name}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.log(e);
+            }
+        }
+        loadMiniGallery();
+    </script>
+</body>
+</html>

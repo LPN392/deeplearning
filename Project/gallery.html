@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>花卉图鉴 - 花知花卉智能识别系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f7f9f6; }
+        .hero-section {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2)), url('https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80');
+            background-size: cover;
+            background-position: center;
+            height: 120px;
+        }
+        .gallery-card { border-radius: 12px; overflow: hidden; background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: transform 0.3s }
+        .gallery-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="hero-section relative">
+        <nav class="flex justify-between items-center px-12 py-6 text-white">
+            <div class="text-2xl font-bold flex items-center gap-2">
+                <span class="text-3xl">🌸</span> <a href="/">花知花卉智能识别系统</a>
+            </div>
+            <div class="flex gap-8 text-lg font-medium">
+                <a href="/" class="hover:text-green-200">首页识别</a>
+                <a href="/gallery" class="border-b-2 border-white pb-1">花卉图鉴</a>
+                <a href="/history" class="hover:text-green-200">识别记录</a>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Gallery Section -->
+    <div class="max-w-7xl mx-auto my-12 px-4 shadow-sm bg-white p-8 rounded-3xl">
+        <div class="flex flex-col mb-8 gap-2">
+            <h2 class="text-3xl font-bold flex items-center before:content-[''] before:inline-block before:w-2 before:h-8 before:bg-green-500 before:mr-3">花卉图鉴库</h2>
+            <p class="text-gray-500 pl-4 mt-2">收录常见观赏花卉，可查看科属、花语等百科信息</p>
+        </div>
+        
+        <div id="gallery-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
+            <p class="text-gray-400 col-span-full text-center">正在加载图鉴数据...</p>
+        </div>
+    </div>
+
+    <script>
+        async function loadGallery() {
+            try {
+                const res = await fetch('/api/gallery');
+                const flowers = await res.json();
+                const container = document.getElementById('gallery-container');
+                container.innerHTML = flowers.map(f => `
+                    <div class="gallery-card pb-4 border border-gray-100">
+                        <div class="relative group">
+                            <img src="${f.img}" onerror="this.src='https://images.unsplash.com/photo-1546842931-886c185b4c8c?w=400'; this.onerror=null;" class="h-48 w-full object-cover">
+                            <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-sm px-4 text-center">
+                                ${f.location}
+                            </div>
+                        </div>
+                        <div class="px-4 mt-3 font-bold text-gray-800 text-lg flex justify-between items-center">
+                            <span>${f.name}</span>
+                            <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">${f.family}</span>
+                        </div>
+                        <div class="px-4 mt-2 text-xs text-gray-500 line-clamp-2">
+                            别名: ${f.alias}<br>
+                            花语: <span class="italic text-gray-400">${f.flower_language}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("加载图鉴失败", err);
+                document.getElementById('gallery-container').innerHTML = '<p class="text-red-500 col-span-full text-center">图鉴拉取失败，请检查网络</p>';
+            }
+        }
+
+        loadGallery();
+    </script>
+</body>
+</html>
